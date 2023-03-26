@@ -16,22 +16,66 @@ interface IUserTableState {
   users: IUser[];
 }
 
-export const generateUsers = (amount: number, prevLength: number): IUser[] => {
+const generateUsers = (amount: number, prevLength: number): IUser[] => {
   return Array.from(Array(amount)).map((_, i) => ({
     index: i + prevLength,
     id: faker.random.numeric(5),
     name: faker.name.fullName(),
     address: faker.address.streetAddress(true),
-    tel: faker.phone.number("(###) ### ## ##"),
+    tel: faker.phone.number(),
   }));
 };
 
+const random = (value: string): number =>
+  value ? faker.datatype.number({ min: 0, max: value.length - 1 }) : 0;
+
+const remove = (value: string): string => {
+  const index = random(value);
+  return value.substring(0, index) + value.substring(index + 1);
+};
+
+const add = (value: string): string => {
+  const index = random(value);
+  const index2 = random(value);
+
+  return value.substring(0, index) + value[index2] + value.substring(index);
+};
+
+const reverse = (value: string): string => {
+  const indexOne = random(value);
+  const indexTwo = random(value);
+  const symbolOne = value[indexOne];
+  const symbolTwo = value[indexTwo];
+  const arr = value.split("");
+  arr[indexOne] = symbolTwo;
+  arr[indexTwo] = symbolOne;
+  return arr.join("");
+};
+
+const FIELDS = ["id", "name", "address", "tel"];
+const addMistakes = (users: IUser[], mistakes: number): IUser[] => {
+  if (mistakes) {
+    return users.map((user) => {
+      for (let i = 0; i < mistakes; i++) {
+        const randomMethod = [remove, add, reverse][
+          faker.datatype.number({ min: 0, max: 2 })
+        ];
+        const randomField = FIELDS[faker.datatype.number({ min: 0, max: 3 })];
+        // @ts-ignore
+        user[randomField] = randomMethod(user[randomField]);
+      }
+
+      return user;
+    });
+  }
+  return users;
+};
+
 const initialState: IUserTableState = {
-  seed: 0,
+  seed: Math.floor(Math.random() * 999999),
   language: "ru",
   mistakes: 0,
   users: [],
-  // users: generateItems(20, 0),
 };
 
 export const userTableSlice = createSlice({
@@ -48,18 +92,13 @@ export const userTableSlice = createSlice({
       state.mistakes = payload;
     },
     addAdditionalUsers: (state) => {
-      // faker.mersenne.seed(state.seed + state.users.length);
       state.users = [
         ...state.users,
-        // ...addErrorsToUsers(
-        ...generateUsers(10, state.users.length),
-        //     state.mistakes
-        // ),
+        ...addMistakes(generateUsers(10, state.users.length), state.mistakes),
       ];
     },
     initializeUsers: (state) => {
-      state.users = generateUsers(20, 0);
-      // state.users = addErrorsToUsers(generateItems(20, 0), state.mistakes);
+      state.users = addMistakes(generateUsers(20, 0), state.mistakes);
     },
   },
 });

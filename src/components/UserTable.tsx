@@ -21,6 +21,7 @@ import styled from "@emotion/styled";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store";
 import { addAdditionalUsers, initializeUsers } from "../slice/userTableSlice";
+import { faker } from "@faker-js/faker";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -43,11 +44,15 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 export const UserTable: FC = () => {
-  const { users } = useSelector((state: RootState) => state.userTable);
+  const { users, language, seed, mistakes } = useSelector(
+    (state: RootState) => state.userTable
+  );
   const dispatch = useDispatch();
   useEffect(() => {
+    faker.locale = language;
+    faker.mersenne.seed(seed);
     dispatch(initializeUsers());
-  }, []);
+  }, [language, seed, mistakes]);
 
   const [distanceBottom, setDistanceBottom] = useState(0);
   const tableRef = useRef<HTMLDivElement | null>(null);
@@ -109,7 +114,7 @@ export const UserTable: FC = () => {
           </TableHead>
           <TableBody>
             {users.map((user) => (
-              <StyledTableRow key={user.id}>
+              <StyledTableRow key={user.index}>
                 <StyledTableCell align="left">{user.index}</StyledTableCell>
                 <StyledTableCell align="left">{user.id}</StyledTableCell>
                 <StyledTableCell align="left">{user.name}</StyledTableCell>
